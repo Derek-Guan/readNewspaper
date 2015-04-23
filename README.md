@@ -5,4 +5,5 @@ The software will fetch newspaper content from Nytimes, and write the contents t
 # Requirement
 
 python-docx
+
 python3.4
