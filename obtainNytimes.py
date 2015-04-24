@@ -1,4 +1,4 @@
-import urllib.request, sys, re
+import urllib.request, urllib.error, sys, re
 from http.cookiejar import CookieJar
 from docx import Document
 
@@ -15,12 +15,12 @@ def writeDoc(title,content):
 
 def ObtainContent(pageContent):
 	#obtain title
+	title = ''
 	for ln in pageContent:
 		#print(ln)
 		mat = re.search(b'<h1 itemprop="headline" id="story-heading" class="story-heading">.*</h1>', ln)
 		if mat:
 			headline = mat.group(0).decode('utf-8')
-			title = ''
 			length = len(headline)
 			i = 0
 			while i < length:
@@ -72,19 +72,36 @@ def fetchWebPages(website):
 	
 	opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj)) 
 	
-	page = opener.open(website)
-
+	page = None
+	try:
+		page = opener.open(website)
+	except urllib.error.HTTPError as e:
+		print("HTTP Error: " + str(e.code))
+	except urllib.error.URLError as e:
+		print("URL Error: " + str(e.reason))
+	except Exception as e:
+		print(e)
 	return page
 
 def ObtainNyTimes():
 
 	page = fetchWebPages(sys.argv[1])
+	if page:
+		(title, paras) = ObtainContent(page)
 
-	(title, paras) = ObtainContent(page)
+		if title == '' or paras == '':
+
+			print("Your Newspaper doesn't have the key elements, Please make sure that your url is Nytimes....")
+
+		else:
+
+			writeDoc(title,paras)
+
+			print("Fetch Your Newspaper Successfully..........")
+	else:
+
+		print("Failed to Fetch your Newspaper, Please Check your internet connection.....")
 	
-	writeDoc(title,paras)
-
-	print("Fetch Your Newspaper Successfully..........")
 
 if __name__ == "__main__":
  	ObtainNyTimes()
